@@ -2,6 +2,9 @@
   (:require
    [clojure.java.io :as io])
   (:import
+   (org.pg.copy OpenInputStream)
+   (java.math RoundingMode
+              BigDecimal)
    (java.time Duration
               LocalDate
               ZoneOffset
@@ -48,6 +51,10 @@
                ;;
                ]))
 
+
+(def JSON_FN_ENCODE nil)
+(def JSON_FN_DECODE nil)
+
 (def ^bytes COPY_TERM
   (byte-array [-1 -1]))
 
@@ -78,7 +85,26 @@
   [_oid _len ^DataInputStream dis]
   (.readLong dis))
 
-;; TODO numeric
+(defmethod -parse-field "numeric"
+  [_oid _len ^DataInputStream dis]
+  (let [amount (.readShort dis)
+        weight (.readShort dis)
+        signum (.readShort dis)
+        scale  (.readShort dis)]
+    (if (zero? amount)
+      BigDecimal/ZERO
+      (let [sb (new StringBuilder)]
+        (when-not (zero? signum)
+          (.append sb \-))
+        (.append sb "0.")
+        (loop [i 0]
+          (when-not (= i amount)
+            (let [digit (.readShort dis)]
+              (.append sb (format "%04d" digit)))
+            (recur (inc i))))
+        (-> (new BigDecimal (.toString sb))
+            (.movePointRight (* 4 (+ weight 1)))
+            (.setScale scale RoundingMode/DOWN))))))
 
 (defmethod -parse-field "float4"
   [_oid _len ^DataInputStream dis]
@@ -106,12 +132,18 @@
 
 (defmethod -parse-field "json"
   [_oid len ^DataInputStream dis]
-  (parse-as-text len dis))
+  ;; TODO: pass string
+  (if JSON_FN_DECODE
+    (JSON_FN_DECODE (new OpenInputStream dis))
+    (parse-as-text len dis)))
 
 (defmethod -parse-field "jsonb"
   [_oid len ^DataInputStream dis]
+  ;; TODO: pass string
   (.skipNBytes dis 1)
-  (parse-as-text (dec len) dis))
+  (if JSON_FN_DECODE
+    (JSON_FN_DECODE (new OpenInputStream dis))
+    (parse-as-text (dec len) dis)))
 
 #_
 (defmethods -parse-field ["text" "varchar" "json"]
