@@ -1,5 +1,6 @@
 (ns pg-copy.core
   (:require
+   [pg-copy.const :as const]
    [clojure.java.io :as io])
   (:import
    (org.pg.copy OpenInputStream)
@@ -26,37 +27,8 @@
      ~@(for [dispatch-val dispatch-vals]
          `(defmethod ~multifn ~dispatch-val ~@fn-tail))))
 
-
-(def ^Duration PG_DIFF
-  (Duration/between Instant/EPOCH
-                    (-> (LocalDate/of 2000 1 1)
-                        (.atStartOfDay(ZoneOffset/UTC)))))
-
-(def ^bytes COPY_HEADER
-  (byte-array [(byte \P)
-               (byte \G)
-               (byte \C)
-               (byte \O)
-               (byte \P)
-               (byte \Y)
-
-               10
-               0xFF
-               13
-               10
-               0
-
-               0 0 0 0
-               0 0 0 0
-               ;;
-               ]))
-
-
 (def JSON_FN_ENCODE nil)
 (def JSON_FN_DECODE nil)
-
-(def ^bytes COPY_TERM
-  (byte-array [-1 -1]))
 
 
 (defmulti -parse-field
@@ -141,9 +113,10 @@
   [_oid len ^DataInputStream dis]
   ;; TODO: pass string
   (.skipNBytes dis 1)
-  (if JSON_FN_DECODE
-    (JSON_FN_DECODE (new OpenInputStream dis))
-    (parse-as-text (dec len) dis)))
+  (let [text (parse-as-text (dec len) dis)]
+    (if JSON_FN_DECODE
+      (JSON_FN_DECODE text)
+      text)))
 
 #_
 (defmethods -parse-field ["text" "varchar" "json"]
@@ -167,7 +140,7 @@
 (defmethod -parse-field "date"
   [_oid len ^DataInputStream dis]
   (let [days (.readInt dis)]
-    (LocalDate/ofEpochDay (+ days (.toDays PG_DIFF)))))
+    (LocalDate/ofEpochDay (+ days (.toDays const/PG_DIFF)))))
 
 (defmethod -parse-field "time"
   [_oid len ^DataInputStream dis]
@@ -189,7 +162,7 @@
         seconds
         (-> payload
             (/ 1000000)
-            (+ (.toSeconds PG_DIFF)))
+            (+ (.toSeconds const/PG_DIFF)))
 
         nanos
         (-> payload
@@ -206,7 +179,7 @@
         seconds
         (-> payload
             (/ 1000000)
-            (+ (.toSeconds PG_DIFF)))
+            (+ (.toSeconds const/PG_DIFF)))
 
         nanos
         (-> payload
@@ -257,7 +230,7 @@
         dis
         (new DataInputStream in)]
 
-    (let [skip (count COPY_HEADER)]
+    (let [skip (count const/COPY_HEADER)]
       (.skipNBytes dis skip)
       (-step dis 0 skip))))
 
