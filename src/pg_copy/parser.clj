@@ -1,12 +1,10 @@
 (ns pg-copy.parser
   (:require
-   [pg-copy.const :as const]
-   [clojure.java.io :as io])
+   [pg-copy.const :as const])
   (:import
-   (org.pg.copy OpenInputStream)
    (java.math RoundingMode
               BigDecimal)
-   (java.time Duration
+   (java.time
               LocalDate
               ZoneOffset
               Instant
@@ -15,8 +13,7 @@
               LocalDateTime
               OffsetTime)
    (java.io InputStream
-            DataInputStream
-            DataOutputStream)
+            DataInputStream)
    (java.util UUID)))
 
 (set! *warn-on-reflection* true)
@@ -31,11 +28,12 @@
     oid))
 
 (defmethod -parse-field :default
-  [oid len ^DataInputStream dis _opt]
+  [oid len _dis _opt]
   (throw (new RuntimeException
               (format "Don't know how to parse value, type: %s, len: %s"
                       oid len))))
 
+#_:clj-kondo/ignore
 (defmethods -parse-field [:raw :bytea]
   [_ len ^DataInputStream dis _opt]
   (.readNBytes dis len))
@@ -103,10 +101,11 @@
   [_oid _len ^DataInputStream dis _opt]
   (.readBoolean dis))
 
-(defn parse-as-text [len ^DataInputStream dis _opt]
+(defn parse-as-text [len ^DataInputStream dis]
   (let [array (.readNBytes dis len)]
     (new String array const/UTF_8)))
 
+#_:clj-kondo/ignore
 (defmethods -parse-field [:text :varchar]
   [_oid len ^DataInputStream dis _opt]
   (parse-as-text len dis))
@@ -125,24 +124,24 @@
     fn-json-decode))
 
 (defmethod -parse-field :date
-  [_oid len ^DataInputStream dis _opt]
+  [_oid _len ^DataInputStream dis _opt]
   (let [days (.readInt dis)]
     (LocalDate/ofEpochDay (+ days (.toDays const/PG_DIFF)))))
 
 (defmethod -parse-field :time
-  [_oid len ^DataInputStream dis _opt]
+  [_oid _len ^DataInputStream dis _opt]
   (let [micros (.readLong dis)]
     (LocalTime/ofNanoOfDay (* micros 1000))))
 
 (defmethod -parse-field :time
-  [_oid len ^DataInputStream dis _opt]
+  [_oid _len ^DataInputStream dis _opt]
   (let [micros (.readLong dis)
         offset (.readInt dis)]
     (OffsetTime/of (LocalTime/ofNanoOfDay (* micros 1000))
                    (ZoneOffset/ofTotalSeconds (- offset)))))
 
 (defmethod -parse-field :timestamp
-  [_oid len ^DataInputStream dis _opt]
+  [_oid _len ^DataInputStream dis _opt]
   (let [payload
         (.readLong dis)
 
@@ -159,7 +158,7 @@
     (LocalDateTime/ofEpochSecond seconds (int nanos) ZoneOffset/UTC)))
 
 (defmethod -parse-field :timestamptz
-  [_oid len ^DataInputStream dis _opt]
+  [_oid _len ^DataInputStream dis _opt]
   (let [payload
         (.readLong dis)
 
@@ -218,8 +217,9 @@
                         (-step -dis (inc i) (+ off len))))))))
 
          dis
-         (new DataInputStream in)]
+         (new DataInputStream in)
 
-     (let [skip (count const/COPY_HEADER)]
-       (.skipNBytes dis skip)
-       (-step dis 0 skip)))))
+         skip (count const/COPY_HEADER)]
+
+     (.skipNBytes dis skip)
+     (-step dis 0 skip))))

@@ -12,7 +12,7 @@
 (def ^Duration PG_DIFF
   (Duration/between Instant/EPOCH
                     (-> (LocalDate/of 2000 1 1)
-                        (.atStartOfDay(ZoneOffset/UTC)))))
+                        (.atStartOfDay ZoneOffset/UTC))))
 
 
 (def ^bytes COPY_HEADER
