@@ -1,0 +1,15 @@
+services:
+
+  pg17:
+    image: postgres:17
+    command: >
+      -E
+      -c log_duration=on
+      -c log_min_duration_statement=0
+    hostname: pg17
+    ports:
+      - "55432:5432"
+    environment:
+      - POSTGRES_DB=test
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_USER=test

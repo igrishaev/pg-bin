@@ -25,45 +25,45 @@
          `(defmethod ~multifn ~dispatch-val ~@fn-tail))))
 
 (defmulti -parse-field
-  (fn [oid _len _dis _opt]
+  (fn [oid _len _dis]
     oid))
 
 (defmethod -parse-field :default
-  [oid len _dis _opt]
+  [oid len _dis]
   (throw (new RuntimeException
               (format "Don't know how to parse value, type: %s, len: %s"
                       oid len))))
 
 #_:clj-kondo/ignore
 (defmethods -parse-field [:raw :bytea]
-  [_ len ^DataInputStream dis _opt]
+  [_ len ^DataInputStream dis]
   (.readNBytes dis len))
 
 (defmethod -parse-field :skip
-  [_oid len ^DataInputStream dis _opt]
+  [_oid len ^DataInputStream dis]
   (.skipNBytes dis len)
   ::skip)
 
 (defmethod -parse-field :uuid
-  [_oid _len ^DataInputStream dis _opt]
+  [_oid _len ^DataInputStream dis]
   (let [hi (.readLong dis)
         lo (.readLong dis)]
     (new UUID hi lo)))
 
 (defmethod -parse-field :int2
-  [_oid _len ^DataInputStream dis _opt]
+  [_oid _len ^DataInputStream dis]
   (.readShort dis))
 
 (defmethod -parse-field :int4
-  [_oid _len ^DataInputStream dis _opt]
+  [_oid _len ^DataInputStream dis]
   (.readInt dis))
 
 (defmethod -parse-field :int8
-  [_oid _len ^DataInputStream dis _opt]
+  [_oid _len ^DataInputStream dis]
   (.readLong dis))
 
 (defmethod -parse-field :numeric
-  [_oid _len ^DataInputStream dis _opt]
+  [_oid _len ^DataInputStream dis]
   (let [amount (.readShort dis)
         weight (.readShort dis)
         signum (.readShort dis)
@@ -91,15 +91,15 @@
             (.setScale scale RoundingMode/DOWN))))))
 
 (defmethod -parse-field :float4
-  [_oid _len ^DataInputStream dis _opt]
+  [_oid _len ^DataInputStream dis]
   (.readFloat dis))
 
 (defmethod -parse-field :float8
-  [_oid _len ^DataInputStream dis _opt]
+  [_oid _len ^DataInputStream dis]
   (.readDouble dis))
 
 (defmethod -parse-field :boolean
-  [_oid _len ^DataInputStream dis _opt]
+  [_oid _len ^DataInputStream dis]
   (.readBoolean dis))
 
 (defn parse-as-text [len ^DataInputStream dis]
@@ -108,61 +108,37 @@
 
 #_:clj-kondo/ignore
 (defmethods -parse-field [:text :varchar]
-  [_oid len ^DataInputStream dis _opt]
+  [_oid len ^DataInputStream dis]
   (parse-as-text len dis))
 
-
-#_
-(defmacro extend-cheshire [& args]
-  `(do
-     (require 'cheshire.core)
-     (defmethod -parse-field :json
-       [oid# len# dis#]
-       (cheshire.core/parse-stream dis# ~@args))))
-
-
-#_
-(extend-cheshire)
-
-
 (defmethod -parse-field :json
-  [_oid len ^DataInputStream dis {:keys [fn-json-decode]}]
-
-  #_
-
-  (sdfsf/sdfsfd (new LimitedInputStream dis len))
-
-
-  (cond-> (parse-as-text len dis)
-    fn-json-decode
-    fn-json-decode))
+  [_oid len ^DataInputStream dis]
+  (parse-as-text len dis))
 
 (defmethod -parse-field :jsonb
-  [_oid len ^DataInputStream dis {:keys [fn-json-decode]}]
+  [_oid len ^DataInputStream dis]
   (.skipNBytes dis 1)
-  (cond-> (parse-as-text (dec len) dis)
-    fn-json-decode
-    fn-json-decode))
+  (parse-as-text (dec len) dis))
 
 (defmethod -parse-field :date
-  [_oid _len ^DataInputStream dis _opt]
+  [_oid _len ^DataInputStream dis]
   (let [days (.readInt dis)]
     (LocalDate/ofEpochDay (+ days (.toDays const/PG_DIFF)))))
 
 (defmethod -parse-field :time
-  [_oid _len ^DataInputStream dis _opt]
+  [_oid _len ^DataInputStream dis]
   (let [micros (.readLong dis)]
     (LocalTime/ofNanoOfDay (* micros 1000))))
 
-(defmethod -parse-field :time
-  [_oid _len ^DataInputStream dis _opt]
+(defmethod -parse-field :timetz
+  [_oid _len ^DataInputStream dis]
   (let [micros (.readLong dis)
         offset (.readInt dis)]
     (OffsetTime/of (LocalTime/ofNanoOfDay (* micros 1000))
                    (ZoneOffset/ofTotalSeconds (- offset)))))
 
 (defmethod -parse-field :timestamp
-  [_oid _len ^DataInputStream dis _opt]
+  [_oid _len ^DataInputStream dis]
   (let [payload
         (.readLong dis)
 
@@ -179,7 +155,7 @@
     (LocalDateTime/ofEpochSecond seconds (int nanos) ZoneOffset/UTC)))
 
 (defmethod -parse-field :timestamptz
-  [_oid _len ^DataInputStream dis _opt]
+  [_oid _len ^DataInputStream dis]
   (let [payload
         (.readLong dis)
 
@@ -198,8 +174,7 @@
 
     (OffsetDateTime/ofInstant inst ZoneOffset/UTC)))
 
-
-(defn parse-line [^DataInputStream dis n columns opt]
+(defn parse-line [^DataInputStream dis n columns]
   (loop [i 0
          pos 2
          result []]
@@ -210,37 +185,32 @@
             oid (nth columns i)]
         (if (= len -1)
           (recur (inc i) pos (conj result nil))
-          (let [value (-parse-field oid len dis opt)]
+          (let [value (-parse-field oid len dis)]
             (if (= value ::skip)
               (recur (inc i) (+ pos len) result)
               (recur (inc i) (+ pos len) (conj result value)))))))))
 
-
 (defn parse
+  [^InputStream in columns]
+  (let [columns (vec columns)
 
-  ([^InputStream in columns]
-   (parse in columns nil))
+        -step
+        (fn -step [^DataInputStream -dis i off]
+          (lazy-seq
+           (let [n (.readShort -dis)]
+             (when-not (= n -1)
+               (let [[len line] (parse-line -dis n columns)]
+                 (cons (vary-meta line
+                                  assoc
+                                  :pg/index i
+                                  :pg/offset off
+                                  :pg/length len)
+                       (-step -dis (inc i) (+ off len))))))))
 
-  ([^InputStream in columns opt]
-   (let [columns (vec columns)
+        dis
+        (new DataInputStream in)
 
-         -step
-         (fn -step [^DataInputStream -dis i off]
-           (lazy-seq
-            (let [n (.readShort -dis)]
-              (when-not (= n -1)
-                (let [[len line] (parse-line -dis n columns opt)]
-                  (cons (vary-meta line
-                                   assoc
-                                   :pg/index i
-                                   :pg/offset off
-                                   :pg/length len)
-                        (-step -dis (inc i) (+ off len))))))))
+        skip (count const/COPY_HEADER)]
 
-         dis
-         (new DataInputStream in)
-
-         skip (count const/COPY_HEADER)]
-
-     (.skipNBytes dis skip)
-     (-step dis 0 skip))))
+    (.skipNBytes dis skip)
+    (-step dis 0 skip)))
