@@ -2,6 +2,7 @@
   (:require
    [pg-copy.const :as const])
   (:import
+   (pg.copy LimitedInputStream)
    (java.math RoundingMode
               BigDecimal)
    (java.time
@@ -110,8 +111,28 @@
   [_oid len ^DataInputStream dis _opt]
   (parse-as-text len dis))
 
+
+#_
+(defmacro extend-cheshire [& args]
+  `(do
+     (require 'cheshire.core)
+     (defmethod -parse-field :json
+       [oid# len# dis#]
+       (cheshire.core/parse-stream dis# ~@args))))
+
+
+#_
+(extend-cheshire)
+
+
 (defmethod -parse-field :json
   [_oid len ^DataInputStream dis {:keys [fn-json-decode]}]
+
+  #_
+
+  (sdfsf/sdfsfd (new LimitedInputStream dis len))
+
+
   (cond-> (parse-as-text len dis)
     fn-json-decode
     fn-json-decode))
