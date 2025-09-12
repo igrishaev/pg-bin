@@ -174,21 +174,23 @@
 
     (OffsetDateTime/ofInstant inst ZoneOffset/UTC)))
 
-(defn parse-line [^DataInputStream dis n columns]
-  (loop [i 0
-         pos 2
-         result []]
-    (if (= i n)
-      [pos result]
-      (let [len (.readInt dis)
-            pos (+ pos 4)
-            oid (get columns i :raw)]
-        (if (= len -1)
-          (recur (inc i) pos (conj result nil))
-          (let [value (-parse-field oid len dis)]
-            (if (= value const/SKIP)
-              (recur (inc i) (+ pos len) result)
-              (recur (inc i) (+ pos len) (conj result value)))))))))
+(defn parse-line [^DataInputStream dis columns]
+  (let [n (.readShort dis)]
+    (when (> n -1)
+      (loop [i 0
+             pos 2
+             result []]
+        (if (= i n)
+          (with-meta result {:pg/length pos})
+          (let [len (.readInt dis)
+                pos (+ pos 4)
+                oid (get columns i :raw)]
+            (if (= len -1)
+              (recur (inc i) pos (conj result nil))
+              (let [value (-parse-field oid len dis)]
+                (if (= value const/SKIP)
+                  (recur (inc i) (+ pos len) result)
+                  (recur (inc i) (+ pos len) (conj result value)))))))))))
 
 (defn parse
   [^InputStream in columns]
@@ -197,15 +199,13 @@
         -step
         (fn -step [^DataInputStream -dis i off]
           (lazy-seq
-           (let [n (.readShort -dis)]
-             (when-not (= n -1)
-               (let [[len line] (parse-line -dis n columns)]
-                 (cons (vary-meta line
-                                  assoc
-                                  :pg/index i
-                                  :pg/offset off
-                                  :pg/length len)
-                       (-step -dis (inc i) (+ off len))))))))
+           (when-let [line (parse-line -dis columns)]
+             (let [len (-> line meta :pg/length)]
+               (cons (vary-meta line
+                                assoc
+                                :pg/index i
+                                :pg/offset off)
+                     (-step -dis (inc i) (+ off len)))))))
 
         dis
         (new DataInputStream in)

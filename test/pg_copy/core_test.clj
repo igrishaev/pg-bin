@@ -63,16 +63,13 @@
                #uuid "4bda6037-1c37-4051-9898-13b82f1bd712"
                123456.123M
                nil]]
-             result))
-
-      ))
+             result))))
 
   (testing "it's lazy"
     (with-open [in (io/input-stream DUMP_PATH)]
       (let [result (copy/parse-seq in FIELDS)]
         (is (instance? LazySeq result)))))
 
-  ;; todo: keep only existing fieds
   (testing "leading fields only"
     (let [result
           (copy/parse DUMP_PATH (take 3 FIELDS))]
@@ -85,6 +82,7 @@
                   first
                   (take 5))))))
 
+  #_
   (testing "skip and underscore"
     (let [result
           (copy/parse DUMP_PATH [:int2
@@ -94,6 +92,8 @@
       (is (= 1
              result))))
 
+  ;; check meta
+  ;; keep only listed columns
   ;; json set default, invoke in parser.clj
   ;; check columns count
   ;; underscore skip
