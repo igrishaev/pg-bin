@@ -40,7 +40,7 @@
   [_ len ^DataInputStream dis]
   (.readNBytes dis len))
 
-(defmethods -parse-field [:skip :_]
+(defmethods -parse-field [:skip :_ nil]
   [_oid len ^DataInputStream dis]
   (.skipNBytes dis len)
   const/SKIP)

@@ -131,11 +131,34 @@
         (is (= "Don't know how to parse value, type: :foo, len: 2"
                (ex-message e))))))
 
+  (testing "nil column"
+    (let [result
+          (copy/parse DUMP_PATH [:int2
+                                 nil
+                                 nil
+                                 :boolean])]
+      (is (= [1 true]
+             (first result)))))
 
-  ;; keyword strings symbols
-  ;; nil column
+  ;; TODO decimal
+  ;; todo interval
 
   ;; type aliases
+
+  ;; smallint
+  ;; integer
+  ;; short
+  ;; bigint
+  ;; -without tz
+  ;; float real
+  ;; double precision double precision
+  ;; serial
+  ;; smallserial
+  ;; bigserial
+  ;; oid
+  ;; name
+  ;; enum
+
   ;; check aliases
   ;; try hyphens
   ;; time-with-time-zone
