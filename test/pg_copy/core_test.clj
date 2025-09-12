@@ -94,6 +94,7 @@
       (is (= 1
              result))))
 
+  ;; json set default, invoke in parser.clj
   ;; check columns count
   ;; underscore skip
   ;; raw
