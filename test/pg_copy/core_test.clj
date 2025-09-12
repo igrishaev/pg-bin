@@ -82,28 +82,64 @@
                   first
                   (take 5))))))
 
-  #_
   (testing "skip and underscore"
     (let [result
           (copy/parse DUMP_PATH [:int2
                                  :skip
                                  :_
                                  :boolean])]
-      (is (= 1
-             result))))
+      (is (= [1 true]
+             (->> result
+                  first
+                  (take 2))))))
 
-  ;; check meta
-  ;; keep only listed columns
-  ;; json set default, invoke in parser.clj
-  ;; check columns count
-  ;; underscore skip
-  ;; raw
-  ;; unknown type
+  (testing "raw"
+    (let [result
+          (copy/parse DUMP_PATH [:int2
+                                 :raw
+                                 :raw
+                                 :boolean])]
+      (is (= [1
+              (=bytes [0, 0, 0, 2])
+              (=bytes [0, 0, 0, 0, 0, 0, 0, 3])
+              true]
+             (->> result
+                  first
+                  (take 4))))))
+
+  (testing "lines meta"
+    (let [result
+          (copy/parse DUMP_PATH FIELDS)]
+      (is (= #:pg{:length 286, :index 0, :offset 19}
+             (-> result
+                 first
+                 meta)))))
+
+  (testing "unknown type"
+    (try
+      (copy/parse DUMP_PATH [:foo])
+      (is false)
+      (catch RuntimeException e
+        (is (= "Don't know how to parse value, type: :foo, len: 2"
+               (ex-message e))))))
+
+
   ;; keyword strings symbols
+
+  ;; empty columns
+  ;; nil column
+
+  ;; type aliases
+  ;; check aliases
   ;; try hyphens
   ;; time-with-time-zone
   ;; timestamp-with-time-zone
   ;; enum
+
+  ;; keep only listed columns
+  ;; json set default, invoke in parser.clj
+  ;; check columns count
+
   ;; json cheshire jsonista charred data.json jsam
   ;; rename project
   ;; tidy project.clj
