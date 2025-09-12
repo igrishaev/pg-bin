@@ -73,14 +73,22 @@
   (testing "leading fields only"
     (let [result
           (copy/parse DUMP_PATH (take 3 FIELDS))]
-      (is (= [1
-              2
-              3
-              (=bytes [1])
-              (=bytes [66, -10, -23, 121])]
+      (is (= [1 2 3]
              (->> result
                   first
                   (take 5))))))
+
+  (testing "one field"
+    (let [result
+          (copy/parse DUMP_PATH [:int2])]
+      (is (= [1]
+             (first result)))))
+
+  (testing "empty fields"
+    (let [result
+          (copy/parse DUMP_PATH [])]
+      (is (= []
+             (first result)))))
 
   (testing "skip and underscore"
     (let [result
@@ -89,9 +97,7 @@
                                  :_
                                  :boolean])]
       (is (= [1 true]
-             (->> result
-                  first
-                  (take 2))))))
+             (first result)))))
 
   (testing "raw"
     (let [result
@@ -103,13 +109,15 @@
               (=bytes [0, 0, 0, 2])
               (=bytes [0, 0, 0, 0, 0, 0, 0, 3])
               true]
-             (->> result
-                  first
-                  (take 4))))))
+             (first result)))))
 
   (testing "lines meta"
-    (let [result
-          (copy/parse DUMP_PATH FIELDS)]
+    (let [result (copy/parse DUMP_PATH FIELDS)]
+      (is (= #:pg{:length 286, :index 0, :offset 19}
+             (-> result
+                 first
+                 meta))))
+    (let [result (copy/parse DUMP_PATH [])]
       (is (= #:pg{:length 286, :index 0, :offset 19}
              (-> result
                  first
@@ -125,8 +133,6 @@
 
 
   ;; keyword strings symbols
-
-  ;; empty columns
   ;; nil column
 
   ;; type aliases
@@ -136,7 +142,6 @@
   ;; timestamp-with-time-zone
   ;; enum
 
-  ;; keep only listed columns
   ;; json set default, invoke in parser.clj
   ;; check columns count
 

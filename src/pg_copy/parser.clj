@@ -1,4 +1,5 @@
 (ns pg-copy.parser
+  (:refer-clojure :exclude [val])
   (:require
    [pg-copy.const :as const])
   (:import
@@ -178,19 +179,25 @@
   (let [n (.readShort dis)]
     (when (> n -1)
       (loop [i 0
-             pos 2
+             off 2
              result []]
         (if (= i n)
-          (with-meta result {:pg/length pos})
+          (with-meta result {:pg/length off})
           (let [len (.readInt dis)
-                pos (+ pos 4)
-                oid (get columns i :raw)]
-            (if (= len -1)
-              (recur (inc i) pos (conj result nil))
-              (let [value (-parse-field oid len dis)]
-                (if (= value const/SKIP)
-                  (recur (inc i) (+ pos len) result)
-                  (recur (inc i) (+ pos len) (conj result value)))))))))))
+                off (+ off 4)
+                oid (get columns i)
+                val (when-not (= len -1)
+                      (-parse-field (or oid :skip) len dis))
+                off (if (= len -1)
+                      off
+                      (+ off len))]
+            (cond
+              (nil? oid)
+              (recur (inc i) off result)
+              (= val const/SKIP)
+              (recur (inc i) off result)
+              :else
+              (recur (inc i) off (conj result val)))))))))
 
 (defn parse
   [^InputStream in columns]
