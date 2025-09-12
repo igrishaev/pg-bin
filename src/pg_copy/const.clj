@@ -1,13 +1,17 @@
 (ns pg-copy.const
   (:import
+   (clojure.lang Keyword)
+   (java.nio.charset Charset
+                     StandardCharsets)
    (java.time Duration
               Instant
               LocalDate
-              ZoneOffset)
-   (java.nio.charset Charset
-                     StandardCharsets)))
+              ZoneOffset)))
 
 (set! *warn-on-reflection* true)
+
+(def ^Keyword ^:const SKIP
+  ::__skip__)
 
 (def ^Duration PG_DIFF
   (Duration/between Instant/EPOCH

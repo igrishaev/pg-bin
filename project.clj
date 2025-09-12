@@ -13,7 +13,8 @@
    [cheshire "6.1.0"]
    [com.cnuernber/charred "1.037"]
    [com.github.igrishaev/jsam "0.1.0"]
-   [org.clojure/data.json "2.5.1"]]
+   [org.clojure/data.json "2.5.1"]
+   [com.github.igrishaev/taggie "0.1.1"]]
 
   :dependencies
   [[org.clojure/clojure :scope "provided"]]
@@ -23,9 +24,11 @@
 
   :profiles
   {:test
-   {:dependencies
-    [[metosin/jsonista "0.3.13"]
-     [cheshire "6.1.0"]
-     [com.cnuernber/charred "1.037"]
-     [com.github.igrishaev/jsam "0.1.0"]
-     [org.clojure/data.json "2.5.1"]]}})
+   {:resource-paths ["test/resources"]
+    :dependencies
+    [[metosin/jsonista]
+     [cheshire]
+     [com.cnuernber/charred]
+     [com.github.igrishaev/jsam]
+     [org.clojure/data.json]
+     [com.github.igrishaev/taggie]]}})

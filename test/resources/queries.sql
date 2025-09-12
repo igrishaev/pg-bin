@@ -8,7 +8,7 @@ create temp table test(
     f_06 float8,
     f_07 text,
     f_08 varchar(12),
-    f_19 time,
+    f_09 time,
     f_10 timetz,
     f_11 date,
     f_12 timestamp,
@@ -16,10 +16,10 @@ create temp table test(
     f_14 bytea,
     f_15 json,
     f_16 jsonb,
-    f_17 uuid
+    f_17 uuid,
+    f_18 numeric(12,3),
+    f_19 text null
 );
-
--- TODO numeric
 
 insert into test values (
     1, 2, 3,
@@ -32,7 +32,9 @@ insert into test values (
     '\xDEADBEEF',
     '{"foo": [1, 2, 3, {"kek": [true, false, null]}]}',
     '{"foo": [1, 2, 3, {"kek": [true, false, null]}]}',
-    '4bda6037-1c37-4051-9898-13b82f1bd712'
+    '4bda6037-1c37-4051-9898-13b82f1bd712',
+    '123456.123456',
+    null
 );
 
-copy test to '/Users/ivan/Downloads/dump.bin' with (format binary);
+\copy test to '/Users/ivan/Downloads/dump.bin' with (format binary);

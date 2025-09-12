@@ -39,10 +39,10 @@
   [_ len ^DataInputStream dis]
   (.readNBytes dis len))
 
-(defmethod -parse-field :skip
+(defmethods -parse-field [:skip :_]
   [_oid len ^DataInputStream dis]
   (.skipNBytes dis len)
-  ::skip)
+  const/SKIP)
 
 (defmethod -parse-field :uuid
   [_oid _len ^DataInputStream dis]
@@ -182,11 +182,11 @@
       [pos result]
       (let [len (.readInt dis)
             pos (+ pos 4)
-            oid (nth columns i)]
+            oid (get columns i :raw)]
         (if (= len -1)
           (recur (inc i) pos (conj result nil))
           (let [value (-parse-field oid len dis)]
-            (if (= value ::skip)
+            (if (= value const/SKIP)
               (recur (inc i) (+ pos len) result)
               (recur (inc i) (+ pos len) (conj result value)))))))))
 
