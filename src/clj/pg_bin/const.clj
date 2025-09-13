@@ -1,4 +1,4 @@
-(ns pg-copy.const
+(ns pg-bin.const
   "
   Constant values.
   "

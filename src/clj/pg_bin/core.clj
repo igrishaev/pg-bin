@@ -1,11 +1,11 @@
-(ns pg-copy.core
+(ns pg-bin.core
   "
   General namespace with user-friendly API.
   "
   (:require
    [clojure.java.io :as io]
-   [pg-copy.json :as json]
-   [pg-copy.parser :as parser]))
+   [pg-bin.json :as json]
+   [pg-bin.parser :as parser]))
 
 (set! *warn-on-reflection* true)
 

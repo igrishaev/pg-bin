@@ -1,4 +1,4 @@
-package pg.copy;
+package pg.bin;
 
 import java.io.FilterInputStream;
 import java.io.IOException;

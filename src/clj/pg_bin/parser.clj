@@ -1,10 +1,10 @@
-(ns pg-copy.parser
+(ns pg-bin.parser
   "
   Parser-related methods and facilities.
   "
   (:refer-clojure :exclude [val])
   (:require
-   [pg-copy.const :as const])
+   [pg-bin.const :as const])
   (:import
    (java.io InputStream
             DataInputStream)

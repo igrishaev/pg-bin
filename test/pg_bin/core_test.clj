@@ -1,4 +1,4 @@
-(ns pg-copy.core-test
+(ns pg-bin.core-test
   (:import
    (clojure.lang LazySeq))
   (:require
@@ -6,8 +6,8 @@
    [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
    [jsonista.core :as jsonista]
-   [pg-copy.core :as copy]
-   [pg-copy.json :as json]
+   [pg-bin.core :as copy]
+   [pg-bin.json :as json]
    taggie.core))
 
 (def FIELDS

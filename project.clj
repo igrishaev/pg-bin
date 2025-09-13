@@ -1,12 +1,12 @@
 (def MIN_JAVA_VERSION "11")
 
-(defproject pg-copy "0.1.0-SNAPSHOT"
+(defproject com.github.igrishaev/pg-bin "0.1.0-SNAPSHOT"
 
   :description
   "Parse binary Postgres COPY output"
 
   :url
-  "http://example.com/FIXME"
+  "https://github.com/igrishaev/pg-bin"
 
   :license
   {:name "The Unlicense"
@@ -17,9 +17,16 @@
    ["maven.compiler.source" ~MIN_JAVA_VERSION]
    ["maven.compiler.target" ~MIN_JAVA_VERSION]]
 
-  ;; :source-paths ["src/clj"]
-  :java-source-paths
-  ["java"]
+  :deploy-repositories
+  {"releases"
+   {:url "https://repo.clojars.org"
+    :creds :gpg}
+   "snapshots"
+   {:url "https://repo.clojars.org"
+    :creds :gpg}}
+
+  :source-paths ["src/clj"]
+  :java-source-paths ["src/java"]
 
   :javac-options
   ["-Xlint:unchecked"

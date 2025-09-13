@@ -1,6 +1,4 @@
 
-- rename project
-- tidy project.clj
 - readme
 - release
 

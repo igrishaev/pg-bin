@@ -1,10 +1,15 @@
-(ns pg-copy.json
+(ns pg-bin.json
+  "
+  A number of macros to change JSON and JSONb parsing
+  in runtime. All of them assume you have required
+  libraries installed.
+  "
   (:import
    (java.io DataInputStream)
-   (pg.copy LimitedInputStream))
+   (pg.bin LimitedInputStream))
   (:require
-   [pg-copy.const :as const]
-   [pg-copy.parser :refer [-parse-field]]))
+   [pg-bin.const :as const]
+   [pg-bin.parser :refer [-parse-field]]))
 
 (set! *warn-on-reflection* true)
 
