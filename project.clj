@@ -1,11 +1,30 @@
+(def MIN_JAVA_VERSION "11")
+
 (defproject pg-copy "0.1.0-SNAPSHOT"
 
-  :description "FIXME: write description"
+  :description
+  "Parse binary Postgres COPY output"
 
-  :url "http://example.com/FIXME"
+  :url
+  "http://example.com/FIXME"
 
-  :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
-            :url "https://www.eclipse.org/legal/epl-2.0/"}
+  :license
+  {:name "The Unlicense"
+   :url "https://choosealicense.com/licenses/unlicense/"}
+
+  :pom-addition
+  [:properties
+   ["maven.compiler.source" ~MIN_JAVA_VERSION]
+   ["maven.compiler.target" ~MIN_JAVA_VERSION]]
+
+  ;; :source-paths ["src/clj"]
+  :java-source-paths
+  ["java"]
+
+  :javac-options
+  ["-Xlint:unchecked"
+   "-Xlint:preview"
+   "--release" ~MIN_JAVA_VERSION]
 
   :managed-dependencies
   [[org.clojure/clojure "1.11.1"]
@@ -18,9 +37,6 @@
 
   :dependencies
   [[org.clojure/clojure :scope "provided"]]
-
-  :java-source-paths
-  ["java"]
 
   :profiles
   {:test
