@@ -26,7 +26,8 @@
    :jsonb
    :uuid
    :numeric
-   :text])
+   :text
+   :decimal])
 
 (def DUMP_PATH
   "test/resources/dump.bin")
@@ -62,7 +63,8 @@
                "{\"foo\": [1, 2, 3, {\"kek\": [true, false, null]}]}"
                #uuid "4bda6037-1c37-4051-9898-13b82f1bd712"
                123456.123M
-               nil]]
+               nil
+               123999.999100500M]]
              result))))
 
   (testing "it's lazy"
@@ -113,12 +115,12 @@
 
   (testing "lines meta"
     (let [result (copy/parse DUMP_PATH FIELDS)]
-      (is (= #:pg{:length 286, :index 0, :offset 19}
+      (is (= #:pg{:length 306, :index 0, :offset 19}
              (-> result
                  first
                  meta))))
     (let [result (copy/parse DUMP_PATH [])]
-      (is (= #:pg{:length 286, :index 0, :offset 19}
+      (is (= #:pg{:length 306, :index 0, :offset 19}
              (-> result
                  first
                  meta)))))
@@ -159,8 +161,9 @@
                                  :json
                                  :jsonb
                                  :uuid
-                                 :numeric
-                                 :name])]
+                                 :decimal
+                                 :name
+                                 :numeric])]
       (is (= [[1
                2
                3
@@ -179,16 +182,12 @@
                "{\"foo\": [1, 2, 3, {\"kek\": [true, false, null]}]}"
                #uuid "4bda6037-1c37-4051-9898-13b82f1bd712"
                123456.123M
-               nil]]
+               nil
+               123999.999100500M]]
              result))))
-
 
   ;; java comments
   ;; docstrings
-
-  ;; TODO decimal
-  ;; todo interval
-
 
   ;; json set default, invoke in parser.clj
   ;; check columns count
@@ -198,5 +197,7 @@
   ;; tidy project.clj
   ;; readme
   ;; release
+
+  ;; interval
 
   )

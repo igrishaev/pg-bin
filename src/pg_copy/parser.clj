@@ -63,7 +63,7 @@
   [_oid _len ^DataInputStream dis]
   (.readLong dis))
 
-(defmethod -parse-field :numeric
+(defmethods -parse-field [:numeric :decimal]
   [_oid _len ^DataInputStream dis]
   (let [amount (.readShort dis)
         weight (.readShort dis)

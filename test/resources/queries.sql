@@ -18,7 +18,8 @@ create temp table test(
     f_16 jsonb,
     f_17 uuid,
     f_18 numeric(12,3),
-    f_19 text null
+    f_19 text null,
+    f_20 decimal
 );
 
 insert into test values (
@@ -34,7 +35,8 @@ insert into test values (
     '{"foo": [1, 2, 3, {"kek": [true, false, null]}]}',
     '4bda6037-1c37-4051-9898-13b82f1bd712',
     '123456.123456',
-    null
+    null,
+    '123999.999100500'
 );
 
 \copy test to '/Users/ivan/Downloads/dump.bin' with (format binary);
