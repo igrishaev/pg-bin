@@ -1,4 +1,7 @@
 (ns pg-copy.const
+  "
+  Constant values.
+  "
   (:import
    (clojure.lang Keyword)
    (java.nio.charset Charset
@@ -14,6 +17,9 @@
   ::__skip__)
 
 (def ^Duration PG_DIFF
+  "
+  Difference between Unix epoch and Postgres epoch.
+  "
   (Duration/between Instant/EPOCH
                     (-> (LocalDate/of 2000 1 1)
                         (.atStartOfDay ZoneOffset/UTC))))
@@ -33,8 +39,9 @@
                10
                0
 
-               0 0 0 0
-               0 0 0 0]))
+               0 0 0 0 ;; dummy int, flags
+               0 0 0 0 ;; dummy int, flags
+               ]))
 
 (def ^bytes COPY_TERM
   (byte-array [-1 -1]))

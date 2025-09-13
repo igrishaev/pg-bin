@@ -1,4 +1,7 @@
 (ns pg-copy.parser
+  "
+  Parser-related methods and facilities.
+  "
   (:refer-clojure :exclude [val])
   (:require
    [pg-copy.const :as const])
@@ -20,12 +23,22 @@
 
 (set! *warn-on-reflection* true)
 
-(defmacro defmethods [multifn dispatch-vals & fn-tail]
+(defmacro defmethods
+  "
+  Define the same implementation for various dispatching
+  values at once.
+  "
+  [multifn dispatch-vals & fn-tail]
   `(do
      ~@(for [dispatch-val dispatch-vals]
          `(defmethod ~multifn ~dispatch-val ~@fn-tail))))
 
 (defmulti -parse-field
+  "
+  A general parsing multimethod. Accepts a type,
+  a number of bytes to parse, and an instance of
+  DataInputStream.
+  "
   (fn [oid _len _dis]
     oid))
 
@@ -63,6 +76,8 @@
   [_oid _len ^DataInputStream dis]
   (.readLong dis))
 
+;; Parse a numeric binary value concatenating strings.
+;; Maybe not efficient but easy to debug and understand.
 (defmethods -parse-field [:numeric :decimal]
   [_oid _len ^DataInputStream dis]
   (let [amount (.readShort dis)
@@ -175,7 +190,12 @@
 
     (OffsetDateTime/ofInstant inst ZoneOffset/UTC)))
 
-(defn parse-line [^DataInputStream dis columns]
+(defn parse-line
+  "
+  Parse a single line (tuple). When it's empty (starts with -1),
+  return nil. Otherwise, build a vector of parsed fields.
+  "
+  [^DataInputStream dis columns]
   (let [n (.readShort dis)]
     (when (> n -1)
       (loop [i 0
@@ -200,6 +220,11 @@
               (recur (inc i) off (conj result val)))))))))
 
 (defn parse
+  "
+  Given an input stream and a list of columns, return
+  a lazy sequence of parsed lines. Must be called under
+  the with-open macro.
+  "
   [^InputStream in columns]
   (let [columns (vec columns)
 

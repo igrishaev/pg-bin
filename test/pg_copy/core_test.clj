@@ -186,8 +186,6 @@
                123999.999100500M]]
              result))))
 
-  ;; java comments
-  ;; docstrings
 
   ;; json set default, invoke in parser.clj
   ;; check columns count
