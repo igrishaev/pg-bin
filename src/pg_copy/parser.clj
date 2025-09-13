@@ -36,7 +36,7 @@
                       oid len))))
 
 #_:clj-kondo/ignore
-(defmethods -parse-field [:raw :bytea]
+(defmethods -parse-field [:raw :bytea :bytes]
   [_ len ^DataInputStream dis]
   (.readNBytes dis len))
 
@@ -51,15 +51,15 @@
         lo (.readLong dis)]
     (new UUID hi lo)))
 
-(defmethod -parse-field :int2
+(defmethods -parse-field [:int2 :short :smallint :smallserial]
   [_oid _len ^DataInputStream dis]
   (.readShort dis))
 
-(defmethod -parse-field :int4
+(defmethods -parse-field [:int4 :int :integer :oid :serial]
   [_oid _len ^DataInputStream dis]
   (.readInt dis))
 
-(defmethod -parse-field :int8
+(defmethods -parse-field [:int8 :bigint :long :bigserial]
   [_oid _len ^DataInputStream dis]
   (.readLong dis))
 
@@ -91,15 +91,15 @@
             (.movePointRight (* 4 (+ weight 1)))
             (.setScale scale RoundingMode/DOWN))))))
 
-(defmethod -parse-field :float4
+(defmethods -parse-field [:float4 :float :real]
   [_oid _len ^DataInputStream dis]
   (.readFloat dis))
 
-(defmethod -parse-field :float8
+(defmethods -parse-field [:float8 :double :double-precision]
   [_oid _len ^DataInputStream dis]
   (.readDouble dis))
 
-(defmethod -parse-field :boolean
+(defmethods -parse-field [:boolean :bool]
   [_oid _len ^DataInputStream dis]
   (.readBoolean dis))
 
@@ -108,7 +108,7 @@
     (new String array const/UTF_8)))
 
 #_:clj-kondo/ignore
-(defmethods -parse-field [:text :varchar]
+(defmethods -parse-field [:text :varchar :enum :name :string]
   [_oid len ^DataInputStream dis]
   (parse-as-text len dis))
 
@@ -126,19 +126,19 @@
   (let [days (.readInt dis)]
     (LocalDate/ofEpochDay (+ days (.toDays const/PG_DIFF)))))
 
-(defmethod -parse-field :time
+(defmethods -parse-field [:time :time-without-time-zone]
   [_oid _len ^DataInputStream dis]
   (let [micros (.readLong dis)]
     (LocalTime/ofNanoOfDay (* micros 1000))))
 
-(defmethod -parse-field :timetz
+(defmethods -parse-field [:timetz :time-with-time-zone]
   [_oid _len ^DataInputStream dis]
   (let [micros (.readLong dis)
         offset (.readInt dis)]
     (OffsetTime/of (LocalTime/ofNanoOfDay (* micros 1000))
                    (ZoneOffset/ofTotalSeconds (- offset)))))
 
-(defmethod -parse-field :timestamp
+(defmethods -parse-field [:timestamp :timestamp-without-time-zone]
   [_oid _len ^DataInputStream dis]
   (let [payload
         (.readLong dis)
@@ -155,7 +155,7 @@
 
     (LocalDateTime/ofEpochSecond seconds (int nanos) ZoneOffset/UTC)))
 
-(defmethod -parse-field :timestamptz
+(defmethods -parse-field [:timestamptz :timestamp-with-time-zone]
   [_oid _len ^DataInputStream dis]
   (let [payload
         (.readLong dis)

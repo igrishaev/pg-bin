@@ -140,30 +140,55 @@
       (is (= [1 true]
              (first result)))))
 
+  (testing "custom aliases"
+    (let [result
+          (copy/parse DUMP_PATH [:short
+                                 :int
+                                 :long
+                                 :bool
+                                 :float
+                                 :double
+                                 :string
+                                 :enum
+                                 :time-without-time-zone
+                                 :time-with-time-zone
+                                 :date
+                                 :timestamp-without-time-zone
+                                 :timestamp-with-time-zone
+                                 :bytes
+                                 :json
+                                 :jsonb
+                                 :uuid
+                                 :numeric
+                                 :name])]
+      (is (= [[1
+               2
+               3
+               true
+               (float 123.456)
+               654.321
+               "hello"
+               "world"
+               #LocalTime "10:42:35"
+               #OffsetTime "10:42:35+00:30"
+               #LocalDate "2025-11-30"
+               #LocalDateTime "2025-11-30T10:42:35"
+               #OffsetDateTime "2025-11-30T10:12:35.123567Z"
+               (=bytes [-34, -83, -66, -17])
+               "{\"foo\": [1, 2, 3, {\"kek\": [true, false, null]}]}"
+               "{\"foo\": [1, 2, 3, {\"kek\": [true, false, null]}]}"
+               #uuid "4bda6037-1c37-4051-9898-13b82f1bd712"
+               123456.123M
+               nil]]
+             result))))
+
+
+  ;; java comments
+  ;; docstrings
+
   ;; TODO decimal
   ;; todo interval
 
-  ;; type aliases
-
-  ;; smallint
-  ;; integer
-  ;; short
-  ;; bigint
-  ;; -without tz
-  ;; float real
-  ;; double precision double precision
-  ;; serial
-  ;; smallserial
-  ;; bigserial
-  ;; oid
-  ;; name
-  ;; enum
-
-  ;; check aliases
-  ;; try hyphens
-  ;; time-with-time-zone
-  ;; timestamp-with-time-zone
-  ;; enum
 
   ;; json set default, invoke in parser.clj
   ;; check columns count
