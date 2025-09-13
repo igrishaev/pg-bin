@@ -3,8 +3,11 @@
    (clojure.lang LazySeq))
   (:require
    [clojure.java.io :as io]
+   [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
+   [jsonista.core :as jsonista]
    [pg-copy.core :as copy]
+   [pg-copy.json :as json]
    taggie.core))
 
 (def FIELDS
@@ -39,6 +42,7 @@
            (= (vec ba) (vec other))))))
 
 (deftest test-parse-ok
+  (json/set-string)
   (testing "it works!"
     (let [result
           (copy/parse DUMP_PATH FIELDS)]
@@ -184,18 +188,54 @@
                123456.123M
                nil
                123999.999100500M]]
-             result))))
+             result)))))
 
+(deftest test-json-cheshire
+  (json/set-cheshire keyword)
+  (let [result
+        (copy/parse DUMP_PATH FIELDS)]
+    (is (= [{:foo [1 2 3 {:kek [true false nil]}]}
+            {:foo [1 2 3 {:kek [true false nil]}]}]
+           (-> result
+               first
+               (subvec 14 16))))))
 
-  ;; json set default, invoke in parser.clj
-  ;; check columns count
+(deftest test-json-data
+  (json/set-data-json {:key-fn str/upper-case})
+  (let [result
+        (copy/parse DUMP_PATH FIELDS)]
+    (is (= [{"FOO" [1 2 3 {"KEK" [true false nil]}]}
+            {"FOO" [1 2 3 {"KEK" [true false nil]}]}]
+           (-> result
+               first
+               (subvec 14 16))))))
 
-  ;; json cheshire jsonista charred data.json jsam
-  ;; rename project
-  ;; tidy project.clj
-  ;; readme
-  ;; release
+(deftest test-json-jsonista
+  (json/set-jsonista jsonista/keyword-keys-object-mapper)
+  (let [result
+        (copy/parse DUMP_PATH FIELDS)]
+    (is (= [{:foo [1 2 3 {:kek [true false nil]}]}
+            {:foo [1 2 3 {:kek [true false nil]}]}]
+           (-> result
+               first
+               (subvec 14 16))))))
 
-  ;; interval
+(deftest test-charred
+  (json/set-charred {:key-fn str/upper-case})
+  (let [result
+        (copy/parse DUMP_PATH FIELDS)]
+    (is (= [{"FOO" [1 2 3 {"KEK" [true false nil]}]}
+            {"FOO" [1 2 3 {"KEK" [true false nil]}]}]
+           (-> result
+               first
+               (subvec 14 16))))))
 
-  )
+(deftest test-jsam
+  (json/set-jsam {:fn-key str/upper-case})
+  (let [result
+        (copy/parse DUMP_PATH FIELDS)]
+    (is (= [{"FOO" [1 2 3 {"KEK" [true false nil]}]}
+            {"FOO" [1 2 3 {"KEK" [true false nil]}]}]
+           (-> result
+               first
+               (subvec 14 16))))))

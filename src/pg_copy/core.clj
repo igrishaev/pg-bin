@@ -4,12 +4,12 @@
   "
   (:require
    [clojure.java.io :as io]
+   [pg-copy.json :as json]
    [pg-copy.parser :as parser]))
 
 (set! *warn-on-reflection* true)
 
-;; TODO names
-;; TODO docstrings
+(json/set-string)
 
 (defn parse-seq [in columns]
   (parser/parse in columns))

@@ -6,7 +6,8 @@
   (:require
    [pg-copy.const :as const])
   (:import
-   (pg.copy LimitedInputStream)
+   (java.io InputStream
+            DataInputStream)
    (java.math RoundingMode
               BigDecimal)
    (java.time
@@ -17,8 +18,6 @@
               OffsetDateTime
               LocalDateTime
               OffsetTime)
-   (java.io InputStream
-            DataInputStream)
    (java.util UUID)))
 
 (set! *warn-on-reflection* true)
@@ -53,6 +52,7 @@
   [_ len ^DataInputStream dis]
   (.readNBytes dis len))
 
+#_:clj-kondo/ignore
 (defmethods -parse-field [:skip :_ nil]
   [_oid len ^DataInputStream dis]
   (.skipNBytes dis len)
@@ -64,6 +64,7 @@
         lo (.readLong dis)]
     (new UUID hi lo)))
 
+#_:clj-kondo/ignore
 (defmethods -parse-field [:int2 :short :smallint :smallserial]
   [_oid _len ^DataInputStream dis]
   (.readShort dis))
@@ -122,19 +123,10 @@
   (let [array (.readNBytes dis len)]
     (new String array const/UTF_8)))
 
-#_:clj-kondo/ignore
 (defmethods -parse-field [:text :varchar :enum :name :string]
   [_oid len ^DataInputStream dis]
-  (parse-as-text len dis))
-
-(defmethod -parse-field :json
-  [_oid len ^DataInputStream dis]
-  (parse-as-text len dis))
-
-(defmethod -parse-field :jsonb
-  [_oid len ^DataInputStream dis]
-  (.skipNBytes dis 1)
-  (parse-as-text (dec len) dis))
+  (let [array (.readNBytes dis len)]
+    (new String array const/UTF_8)))
 
 (defmethod -parse-field :date
   [_oid _len ^DataInputStream dis]
