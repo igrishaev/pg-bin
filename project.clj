@@ -25,6 +25,17 @@
    {:url "https://repo.clojars.org"
     :creds :gpg}}
 
+  :release-tasks
+  [["vcs" "assert-committed"]
+   ["test"]
+   ["change" "version" "leiningen.release/bump-version" "release"]
+   ["vcs" "commit"]
+   ["vcs" "tag" "--no-sign"]
+   ["deploy"]
+   ["change" "version" "leiningen.release/bump-version"]
+   ["vcs" "commit"]
+   ["vcs" "push"]]
+
   :source-paths ["src/clj"]
   :java-source-paths ["src/java"]
 
