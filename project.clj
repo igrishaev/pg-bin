@@ -1,6 +1,6 @@
 (def MIN_JAVA_VERSION "11")
 
-(defproject com.github.igrishaev/pg-bin "0.1.0-SNAPSHOT"
+(defproject com.github.igrishaev/pg-bin "0.1.0"
 
   :description
   "Parse binary Postgres COPY output"
