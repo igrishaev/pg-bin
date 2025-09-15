@@ -3,14 +3,14 @@
 A library to parse Postgres COPY dumps made in binary format.
 
 Postgres has a great API to transfer data into and out from a database called
-COPY. What is special about it is, it supports three different formats: CSV,
-text and binary. Both CSV and text are similar: values are passed using their
+COPY. What is special about it is that it supports three different formats: CSV,
+text and binary. Both CSV and text are trivial: values are passed using their
 text representation. Only quoting rules and separating characters differ.
 
 Binary format is special in that direction that values are not text. They're
 passed exactly how they're stored in Postgres. Thus, binary format is more
 compact: it's 30% less in size than CSV or text. The same applies to
-performance: COPY-ing a binary data is usually 15-25% faster.
+performance: COPY-ing a binary data back and forth takes about 15-25% less time.
 
 To parse a binary dump, one must know its structure. This is what the library
 does: it knows how to parse such dumps. It supports most of the built-in
@@ -176,7 +176,7 @@ on -- anything that can be coerced to an input stream using the
 `clojure.java.io/input-stream` function.
 
 Binary files produced by Postgres don't know their structure. Unfortunately,
-there is no information about types, only data. One should help the library to
+there is no information about types, only data. One should help the library
 traverse a binary dump by specifying a vector of types. The `FIELDS` variable
 declares the structure of the file. See below what types are supported.
 
@@ -210,7 +210,7 @@ keep only the leading ones:
 [[1 2 3]]
 ~~~
 
-To skip fields in the middle, use either `:skip` or an underscore:
+To skip fields located in the middle, use either `:skip` or an underscore:
 
 ~~~clojure
 (copy/parse DUMP_PATH [:int2 :skip :_ :boolean])
@@ -219,10 +219,10 @@ To skip fields in the middle, use either `:skip` or an underscore:
 
 ## Raw fields
 
-When, for some reason, you have a type in your dump that the library is not
-aware about, or you'd like to take at its binary representation, specify `:raw`
-or `:bytes`. Each value will be a byte array then. It's up to you how to deal
-with those bytes:
+If, for any reason, you have a type in your dump that the library is not aware
+about, or you'd like to examine its binary representation, specify `:raw` or
+`:bytes`. Each value will be a byte array then. It's up to you how to deal with
+those bytes:
 
 ~~~clojure
 (copy/parse DUMP_PATH [:raw :raw :bytes])
@@ -234,12 +234,12 @@ with those bytes:
 ## Handling JSON
 
 Postgres is well-known for its vast JSON capabilities, and sometimes tables that
-we dump using COPY have json(b) columns. Above, you saw that by default, they're
-parsed into plain strings. This is because there is no a built-in JSON parser in
-Java and I don't want to tie this library to a certain JSON implementation.
+we dump have json(b) columns. Above, you saw that by default, they're parsed as
+plain strings. This is because there is no a built-in JSON parser in Java and I
+don't want to tie this library to a certain JSON implementation.
 
 But the library provides a number of macros to extend undelrying
-multi-methods. With one line of code, you can enable parsing JSON(b) types with
+multi-methods. With a line of code, you can enable parsing json(b) types with
 Chesire, Jsonista, Clojure.data.json, Charred, and JSam. This is how to do it:
 
 ~~~clojure
@@ -248,7 +248,8 @@ Chesire, Jsonista, Clojure.data.json, Charred, and JSam. This is how to do it:
    [pg-bin.core :as copy]
    [pg-bin.json :as json]))
 
-(json/set-cheshire keyword)
+(json/set-cheshire keyword) ;; overrides multimethods
+
 (copy/parse DUMP_PATH FIELDS)
 
 [[...
@@ -270,7 +271,7 @@ The `pg-bin.json` namespace provides the following macros:
 - `set-charred`: parse using Charred;
 - `set-jsam`: parse using JSam.
 
-All of them accept optional parameters that are passed into an underlying
+All of them accept optional parameters that are passed into the underlying
 parsing function.
 
 PG.Bin doesn't introduce any JSON-related dependencies. Each macro assumes you
@@ -289,7 +290,7 @@ Each parsed line tracks its length in bytes, offset from the beginning of a file
 #:pg{:length 306, :index 0, :offset 19}
 ~~~
 
-Knowing these values might help reading a dump file by chunks.
+Knowing these values might help reading a dump by chunks.
 
 ## Supported types
 
@@ -310,21 +311,21 @@ Knowing these values might help reading a dump file by chunks.
 - `:timestamp :timestamp-without-time-zone` becomes `java.time.LocalDateTime`
 - `:timestamptz :timestamp-with-time-zone` becomes `java.time.OffsetDateTime`
 
-Ping me if need more.
+Ping me for more types, if needed.
 
 ## On Writing
 
 At the moment, the library only parses binary dumps. Writing them is possible
-but requires extra work. Ping me if you really need writing binary files.
+yet requires extra work. Ping me if you really need writing binary files.
 
 ## Scenarios
 
 Why using this library ever? Imagine you have to fetch a mas-s-s-ive chunk of
 rows from a database, say 2-3 million to build a report. That might be an issue:
-you don't to saturate memory, neither you want to paginate using LIMIT/OFFSET
-(which is slow). A simple solution would be to dump the data you need into a
-file and process it. You won't keep the database constantly busy as you're
-woring with a dump! Here is a small demo:
+you don't want to saturate memory, neither you want to paginate using
+LIMIT/OFFSET as it's slow. A simple solution would be to dump the data you need
+into a file and process it. You won't keep the database constantly busy as
+you're working with a dump! Here is a small demo:
 
 ~~~clojure
 (ns some.ns
@@ -354,8 +355,8 @@ woring with a dump! Here is a small demo:
       ...)))
 ~~~
 
-Above, we dump the data we need into a file and then process it. There is a way
-though to process lines on the fly in another thread! Another demo:
+Above, we dump the data into a file and then process it. There is a way to
+process lines on the fly using another thread. The second demo:
 
 ~~~clojure
 (let [conn
@@ -374,11 +375,11 @@ though to process lines on the fly in another thread! Another demo:
 
       fut ;; a future to process the output
       (future
-        (with-open [r (io/reader in)]
-          ;; must report we have started
-          (deliver started? true)
+        (with-open [_ in] ;; must close it afterward
+          (deliver started? true) ;; must report we have started
           (let [lines (copy/parse-seq in [:int2 :text ...])]
-            (doseq [line lines]
+            (doseq [line lines] ;; process on the fly
+              ;; without touching the disk
               ...))))]
 
   ;; ensure the future has started
